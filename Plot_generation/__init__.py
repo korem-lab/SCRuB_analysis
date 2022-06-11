@@ -38,7 +38,7 @@ def store_f1_plots(plot_plates=True, hide_axes=False):
     data=pd.read_csv('../results/data/Fig_1/F1_well_leakage_Results.csv')
     plot_f1d(data, hide_axes=hide_axes)
     make_no_contam_plots(hide_axes=hide_axes)
-    noise_level_plot(hide_axes=hide_axes)
+    # noise_level_plot(hide_axes=hide_axes)
     return(None)
 
 def pull_f2_data(data_dir):

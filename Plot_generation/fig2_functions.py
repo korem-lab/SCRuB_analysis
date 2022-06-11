@@ -19,7 +19,8 @@ global_palette = {'Raw':'#4c72b0', 'Restrictive':'#dd8452',
                   'Decontam (LB)':'darkgreen',
                    'Restrictive (Original)':'#dd8452',
                   'microDecon':'purple',
-                 'Input':'#4c72b0',}
+                 'Input':'#4c72b0',
+                 'No decontamination':'#4c72b0'}
 
 sns.set_theme(font_scale=2)
 sns.set(rc={'axes.facecolor':'white', 'figure.facecolor':'white', 
@@ -321,6 +322,7 @@ def make_estimated_cont_plot(estimated_contaminants,
         'Restrictive':'Restrictive',
         'decont_cont':'Decontam',
         'decontam_low_biomass_cont':'Decontam (LB)',
+        'microdecon_cont':'microDecon',
         'scrub_contaminant':'SCRuB'
         }
     plt.rcParams["font.family"] = "Calibri"
@@ -344,6 +346,7 @@ def make_estimated_cont_plot(estimated_contaminants,
     if hide_axes:
         plt.xticks(np.linspace(0,1,2), labels=[]*2)
         plt.yticks(np.linspace(0,1,2), labels=[]*2)
+        plt.legend('',frameon=False)
 
         
     else:
@@ -410,19 +413,22 @@ def make_f2_swarmplot(datasets, path='results/Plots/fig_2/F2_F.pdf',
     #                                          if True else (2.5,4.5), 
                  dpi=144, 
                 figsize=(8, 8))
+    full_plot_df.Dataset=full_plot_df.Dataset.str.replace('Raw', 'No decontamination')
+    
+    print(full_plot_df.groupby(['Dataset', 'Group'])['Value'].apply(lambda x: (x < 1e-4).sum() ) )
     
     plt.ylim(-.05,1.05)
     ax=sns.swarmplot(x='Group',
                       y='Value', 
                       hue='Dataset',
                       data=full_plot_df, 
-                      hue_order = ['Raw', 'Restrictive', 'Decontam', 'Decontam_LB', 'microDecon', 'SCRUB'],
+                      hue_order = ['No decontamination', 'Restrictive', 'Decontam', 'Decontam_LB', 'microDecon', 'SCRUB'],
     #                order = ['Raw', 'Decontam', 'SCRUB'],
                       order = ['Low-Prevalence', 'High-Prevalence'],
                       palette=global_palette, 
     #                   color='black', 
                       dodge=True,
-                      size=2.5)
+                      size=5)
     
 
     if hide_axes:
@@ -430,7 +436,9 @@ def make_f2_swarmplot(datasets, path='results/Plots/fig_2/F2_F.pdf',
         plt.xlabel(None)
         plt.ylabel(None)
         ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
         ax.get_legend().remove()
+        plt.axis('off')
     else:
         plt.ylabel('Relative Abundance')
         plt.xlabel('Taxon Classification')
@@ -497,7 +505,16 @@ def make_supplemental_jsd_swarmplot(datasets, path='../results/Supplementary_Fig
     else:
         full_plot_df = pd.concat([make_supplemental_jsd_swarmplot_data(datasets[i][0]) for i in range(len(datasets))])
     
+    full_plot_df=full_plot_df.fillna(full_plot_df.Value.max())
     print('low-prevalence')
+    
+    
+    print('SCRuB vs microDecon')
+    print(scipy.stats.wilcoxon(full_plot_df.loc[(full_plot_df.Dataset=='SCRUB')&(full_plot_df.Group=='Low-Prevalence')].Value.values, 
+                               full_plot_df.loc[(full_plot_df.Dataset=='microDecon')&(full_plot_df.Group=='Low-Prevalence')
+                                                                                    ].Value.values ) )
+    
+    
 
     print('SCRuB vs Decontam')
     print(scipy.stats.wilcoxon(full_plot_df.loc[(full_plot_df.Dataset=='SCRUB')&(full_plot_df.Group=='Low-Prevalence')].Value.values, 
@@ -524,6 +541,14 @@ def make_supplemental_jsd_swarmplot(datasets, path='../results/Supplementary_Fig
     
     
     print('High Prevalence')
+    
+    print('SCRuB vs microDecon')
+    print(scipy.stats.wilcoxon(full_plot_df.loc[(full_plot_df.Dataset=='SCRUB')&(full_plot_df.Group!='Low-Prevalence')].Value.values, 
+                               full_plot_df.loc[(full_plot_df.Dataset=='microDecon')&(full_plot_df.Group!='Low-Prevalence')
+                                                                                    ].Value.values ) )
+
+
+    
     print('SCRuB vs Decontam')
     print(scipy.stats.wilcoxon(full_plot_df.loc[(full_plot_df.Dataset=='SCRUB')&(full_plot_df.Group!='Low-Prevalence')].Value.values, 
                                full_plot_df.loc[(full_plot_df.Dataset=='Decontam')&(full_plot_df.Group!='Low-Prevalence')
@@ -565,20 +590,21 @@ def make_supplemental_jsd_swarmplot(datasets, path='../results/Supplementary_Fig
     plt.subplots(1,
                  dpi=144, 
                 figsize=(8, 8))
-
+    
+    full_plot_df.Dataset=full_plot_df.Dataset.str.replace('Raw', 'No decontamination')
     
     plt.ylim(-.05,1.05)
     ax=sns.swarmplot(x='Group',
                      y='Value', 
                      hue='Dataset',
                      data=full_plot_df, 
-                     hue_order = ['Raw', 'Restrictive', 'Decontam', 'Decontam_LB', 'microDecon', 'SCRUB'],
+                     hue_order = ['No decontamination', 'Restrictive', 'Decontam', 'Decontam_LB', 'microDecon', 'SCRUB'],
     #                order = ['Raw', 'Decontam', 'SCRUB'],
                      order = ['Low-Prevalence', 'High-Prevalence'],
                      palette=global_palette, 
     #                   color='black', 
                      dodge=True,
-                     size=2.5, 
+                     size=5, 
                      )
 
     if hide_axes:
@@ -587,6 +613,7 @@ def make_supplemental_jsd_swarmplot(datasets, path='../results/Supplementary_Fig
         plt.ylabel(None)
         ax.axes.get_xaxis().set_visible(False)
         ax.get_legend().remove()
+        plt.axis('off')
         
     else:
         plt.ylabel('Jensen-Shannon divergence')

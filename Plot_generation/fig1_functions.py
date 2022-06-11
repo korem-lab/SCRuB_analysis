@@ -37,7 +37,7 @@ sns.set(rc={'axes.facecolor':'white', 'figure.facecolor':'white',
 def plot_f1c(data, out_path='../results/Plots/fig_1/F1_C.pdf', global_palette=global_palette, 
             hide_axes=False):
     plt.subplots(1,
-                 figsize=(10, 10),
+                 figsize=(11.02, 10),
                  dpi=500)
     
     tmp=data.loc[(data.names!='Spatial SCRUB')&(data.well_to_well_level==0)]
@@ -65,6 +65,18 @@ def plot_f1c(data, out_path='../results/Plots/fig_1/F1_C.pdf', global_palette=gl
     
     
     # plot vs scrub significance asterisks
+    
+    # 'worse than' test
+    q=tmp[['contam_level', 'names']].drop_duplicates()
+    q['sig_v_raw'] = q.apply(lambda row: [ wilcoxon( 
+                tmp.loc[ (tmp.contam_level==row.contam_level)&
+                    (tmp.names==row.names) ]['jsds'].values, 
+        tmp.loc[ (tmp.contam_level==row.contam_level)&
+                    (tmp.names=='No decontamination' ) ]['jsds'].values, 
+        alternative='less').pvalue
+                        if row.names!='No decontamination' else 1][0],
+           axis=1)
+    print(q)
 
     # 'worse than' test
     q=tmp[['contam_level', 'names']].drop_duplicates()
@@ -77,10 +89,10 @@ def plot_f1c(data, out_path='../results/Plots/fig_1/F1_C.pdf', global_palette=gl
                         if row.names!='SCRuB' else 1][0],
            axis=1)
 
-
+    print(q)
 
     q['y_val']=1.09
-    q['is_sig'] =  q.sig_v_scrub < 1e-5
+    q['is_sig'] =  q.sig_v_scrub < 1e-4
     
     if sum(q.is_sig > 0):
         sns.swarmplot( x='contam_level', y='y_val', hue='names', 
@@ -122,7 +134,7 @@ def plot_f1c(data, out_path='../results/Plots/fig_1/F1_C.pdf', global_palette=gl
            axis=1)
 
     q['y_val']=.003
-    q['is_sig'] =  q.sig_v_scrub < 1e-5
+    q['is_sig'] =  q.sig_v_scrub < 1e-4
 
     if sum(q.is_sig)>0:
         sns.swarmplot( x='contam_level', y='y_val', hue='names', 
@@ -163,6 +175,8 @@ def plot_f1c(data, out_path='../results/Plots/fig_1/F1_C.pdf', global_palette=gl
     plt.ylabel('Median Jensen-Shannon Divergence')
     plt.xlabel('Contamination')
     plt.ylim(2.5e-3, 1.2)
+    plt.ylim(0.01, 1.2)
+    
     
     ax.legend(handles[:6], labels[:6])
     
@@ -188,7 +202,7 @@ def plot_f1d(data, out_path='../results/Plots/fig_1/F1_D.pdf', global_palette=gl
     
     plt.subplots(1, #figsize =(2.7/2.54, 4.7/2.54) \
     #                                          if True else (2.5,4.5), 
-                 figsize=(10, 10),
+                 figsize=(11.02, 10),
                  dpi=500)
 
     tmp=data.loc[(data.contam_level==.05)&(data.well_to_well_level != 0)]
@@ -219,6 +233,20 @@ def plot_f1d(data, out_path='../results/Plots/fig_1/F1_D.pdf', global_palette=gl
     
     ##  plot vs scrub significance asterisks    
     
+    # 'worse than' test
+    q=tmp[['well_to_well_level', 'names']].drop_duplicates()
+    q['sig_v_raw'] = q.apply(lambda row: [ wilcoxon( 
+                tmp.loc[ (tmp.well_to_well_level==row.well_to_well_level)&
+                    (tmp.names==row.names) ]['jsds'].values, 
+        tmp.loc[ (tmp.well_to_well_level==row.well_to_well_level)&
+                    (tmp.names=='No decontamination' ) ]['jsds'].values, 
+        alternative='greater').pvalue
+                        if row.names!='No decontamination' else 1][0],
+           axis=1)
+    print(q)
+
+
+    
     # 'worse than' significance'
     q=tmp[['well_to_well_level', 'names']].drop_duplicates()
     q['sig_v_scrub'] = q.apply(lambda row: [ wilcoxon( 
@@ -229,10 +257,11 @@ def plot_f1d(data, out_path='../results/Plots/fig_1/F1_D.pdf', global_palette=gl
         alternative='greater').pvalue
                         if row.names!='SCRuB' else 1][0],
            axis=1)
+    print(q)
 
 
     q['y_val']=1.09
-    q['is_sig'] =  q.sig_v_scrub < 1e-5
+    q['is_sig'] =  q.sig_v_scrub < 1e-4
     if sum(q.is_sig > 0):
 
         sns.swarmplot( x='well_to_well_level', y='y_val', hue='names', 
@@ -274,7 +303,7 @@ def plot_f1d(data, out_path='../results/Plots/fig_1/F1_D.pdf', global_palette=gl
            axis=1)
 
     q['y_val']=.003
-    q['is_sig'] =  q.sig_v_scrub < 1e-5
+    q['is_sig'] =  q.sig_v_scrub < 1e-4
 
     if q.is_sig.sum() > 0:
         sns.swarmplot( x='well_to_well_level', y='y_val', hue='names', 
@@ -318,6 +347,8 @@ def plot_f1d(data, out_path='../results/Plots/fig_1/F1_D.pdf', global_palette=gl
     ax.legend(handles[:6], labels[:6])
     
     plt.ylim(2.5e-3, 1.2)
+    plt.ylim(0.01, 1.2)
+    
     if hide_axes:
         ax.get_legend().remove()
         ax.set_xticks([])
@@ -338,7 +369,7 @@ def plot_f1d(data, out_path='../results/Plots/fig_1/F1_D.pdf', global_palette=gl
 
 
 
-def make_no_contam_plots():
+def make_no_contam_plots(hide_axes=False):
     
     
     ## venn diagram
@@ -404,6 +435,14 @@ def make_no_contam_plots():
     ax.axes.get_xaxis().set_visible(False)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles[:4], labels[:4])
+
+    if hide_axes:
+        ax.get_legend().remove()
+        ax.set_xticks([])
+        ax.set(yticklabels=[])
+        plt.xlabel(None)
+        plt.ylabel(None)
+        plt.title(None)
     
     plt.savefig('../results/Supplementary_figures/Fig_S2_b.pdf', 
                 dpi=900,
@@ -426,7 +465,7 @@ def noise_level_plot(hide_axes=False):
 
     plt.subplots(1, #figsize =(2.7/2.54, 4.7/2.54) \
     #                                          if True else (2.5,4.5), 
-                 figsize=(11.04, 10),
+                 figsize=(11.5, 10),
                  dpi=500)
 
     tmp=data.copy()#loc[(data.contam_level==.05)&(data.well_to_well_level != 0)]
@@ -474,7 +513,7 @@ def noise_level_plot(hide_axes=False):
 
 
     q['y_val']=1.09
-    q['is_sig'] =  q.sig_v_scrub < 1e-5
+    q['is_sig'] =  q.sig_v_scrub < 1e-4
     if sum(q.is_sig > 0):
 
         sns.swarmplot( x='n_taxa', y='y_val', hue='names', 
@@ -518,7 +557,7 @@ def noise_level_plot(hide_axes=False):
            axis=1)
 
     q['y_val']=.003
-    q['is_sig'] =  q.sig_v_scrub < 1e-5
+    q['is_sig'] =  q.sig_v_scrub < 1e-4
 
     if q.is_sig.sum() > 0:
         sns.swarmplot( x='n_taxa', y='y_val', hue='names', 
@@ -560,11 +599,10 @@ def noise_level_plot(hide_axes=False):
     plt.ylabel('Median Jensen-Shannon Divergence')
     plt.xlabel('Noise level')
     ax.set_yticks([.01, .1, .25, 5, .75, 1])
-    # plt.legend(loc='upper center', bbox_to_anchor=(0.5,-0.2), prop={'size':23})
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles[:6], labels[:6], loc='upper center', bbox_to_anchor=(0.5,-0.2),)
 
-    plt.ylim(2.5e-3, 1.2)
+    plt.ylim(2.5e-3, 1.2)# .2)# 1.2)
     
     if hide_axes:
         ax.get_legend().remove()
